@@ -35,6 +35,7 @@
 #ifdef OPENSSL
 # include "openssl/opensslv.h"
 # include "openssl/bn.h"
+# include "openssl/rsa.h"
 typedef BIGNUM * BigInteger;
 typedef BN_CTX * BigIntegerCtx;
 typedef BN_MONT_CTX * BigIntegerModAccel;

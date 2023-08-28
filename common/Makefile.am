@@ -5,6 +5,7 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 	$(GLOBAL_CFLAGS) \
 	$(libusbmuxd_CFLAGS) \
+	$(limd_glue_CFLAGS) \
 	$(libplist_CFLAGS) \
 	$(libgnutls_CFLAGS) \
 	$(libtasn1_CFLAGS) \
@@ -14,6 +15,7 @@ AM_CFLAGS = \
 
 AM_LDFLAGS = \
 	$(libusbmuxd_LIBS) \
+	$(limd_glue_LIBS) \
 	$(libplist_LIBS) \
 	$(libgnutls_LIBS) \
 	$(libtasn1_LIBS) \
