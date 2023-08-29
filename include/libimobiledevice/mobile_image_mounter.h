@@ -154,6 +154,10 @@ mobile_image_mounter_error_t mobile_image_mounter_upload_image(mobile_image_moun
 mobile_image_mounter_error_t mobile_image_mounter_mount_image(mobile_image_mounter_client_t client, const char *image_path, const char *signature, uint16_t signature_size, const char *image_type, plist_t *result);
 
 
+mobile_image_mounter_error_t get_manifest_from_tss(mobile_image_mounter_client_t client, plist_t build_manifest, uint64_t unique_chip_id, char **manifest, uint64_t *manifest_size);
+
+mobile_image_mounter_error_t mobile_image_mounter_query_personalization_manifest(mobile_image_mounter_client_t client, const char *image_type, const char *signature, uint16_t signature_size, char **manifest, uint64_t *manifest_size);
+
 mobile_image_mounter_error_t mobile_image_mounter_mount_personalized_image(mobile_image_mounter_client_t client, const char *signature, uint16_t signature_size, const char *trustcache, uint16_t trustcache_size, const char *image_type, plist_t *result);
 
 /**

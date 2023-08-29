@@ -27,6 +27,7 @@ noinst_LTLIBRARIES = libinternalcommon.la
 libinternalcommon_la_LIBADD = 
 libinternalcommon_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined
 libinternalcommon_la_SOURCES = \
+	common.c common.h \
 	debug.c debug.h \
 	userpref.c userpref.h
 

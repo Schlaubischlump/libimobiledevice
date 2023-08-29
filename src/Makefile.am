@@ -11,14 +11,16 @@ AM_CFLAGS = \
 	$(limd_glue_CFLAGS) \
 	$(ssl_lib_CFLAGS) \
 	$(LFS_CFLAGS) \
-	$(PTHREAD_CFLAGS)
+	$(PTHREAD_CFLAGS) \
+	$(libcurl_CFLAGS)
 
 AM_LDFLAGS = \
 	$(libusbmuxd_LIBS) \
 	$(libplist_LIBS) \
 	$(limd_glue_LIBS) \
 	$(ssl_lib_LIBS) \
-	$(PTHREAD_LIBS)
+	$(PTHREAD_LIBS) \
+	$(libcurl_LIBS)
 
 lib_LTLIBRARIES = libimobiledevice-1.0.la
 libimobiledevice_1_0_la_LIBADD = $(top_builddir)/common/libinternalcommon.la
@@ -41,6 +43,7 @@ libimobiledevice_1_0_la_SOURCES = \
 	notification_proxy.c notification_proxy.h \
 	installation_proxy.c installation_proxy.h \
 	sbservices.c sbservices.h \
+	tss.c tss.h \
 	mobile_image_mounter.c mobile_image_mounter.h \
 	screenshotr.c screenshotr.h \
 	mobilesync.c mobilesync.h \

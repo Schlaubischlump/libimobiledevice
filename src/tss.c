@@ -32,6 +32,7 @@
 #include "endianness.h"
 
 #include "common/common.h"
+#include "common/debug.h"
 
 #define AUTH_VERSION "850.0.2"
 
@@ -52,7 +53,7 @@ char* ecid_to_string(uint64_t ecid)
 	char* ecid_string = malloc(ECID_STRSIZE);
 	memset(ecid_string, '\0', ECID_STRSIZE);
 	if (ecid == 0) {
-		error("ERROR: Invalid ECID passed.\n");
+		debug_info("ERROR: Invalid ECID passed.\n");
 		return NULL;
 	}
 	snprintf(ecid_string, ECID_STRSIZE, "%"PRIu64, ecid);
@@ -91,17 +92,17 @@ int tss_request_add_local_policy_tags(plist_t request, plist_t parameters)
 	plist_dict_set_item(request, "@ApImg4Ticket", plist_new_bool(1));
 
 	if (_plist_dict_copy_bool(request, parameters, "Ap,LocalBoot", NULL) < 0) {
-		error("ERROR: Unable to find required Ap,LocalBoot in parameters\n");
+		debug_info("ERROR: Unable to find required Ap,LocalBoot in parameters\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_item(request, parameters, "Ap,LocalPolicy", NULL) < 0) {
-		error("ERROR: Unable to find required Ap,LocalPolicy in parameters\n");
+		debug_info("ERROR: Unable to find required Ap,LocalPolicy in parameters\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_data(request, parameters, "Ap,NextStageIM4MHash", NULL) < 0) {
-		error("ERROR: Unable to find required Ap,NextStageIM4MHash in parameters\n");
+		debug_info("ERROR: Unable to find required Ap,NextStageIM4MHash in parameters\n");
 		return -1;
 	}
 
@@ -116,14 +117,14 @@ int tss_request_add_local_policy_tags(plist_t request, plist_t parameters)
 	if (!plist_dict_get_item(request, "ApSecurityMode")) {
 		/* copy from parameters if available */
 		if (_plist_dict_copy_bool(request, parameters, "ApSecurityMode", NULL) < 0) {
-			error("ERROR: Unable to find required ApSecurityMode in parameters\n");
+			debug_info("ERROR: Unable to find required ApSecurityMode in parameters\n");
 			return -1;
 		}
 	}
 	if (!plist_dict_get_item(request, "ApProductionMode")) {
 		/* copy from parameters if available */
 		if (_plist_dict_copy_bool(request, parameters, "ApProductionMode", NULL) < 0) {
-			error("ERROR: Unable to find required ApProductionMode in parameters\n");
+			debug_info("ERROR: Unable to find required ApProductionMode in parameters\n");
 			return -1;
 		}
 	}
@@ -136,19 +137,19 @@ int tss_parameters_add_from_manifest(plist_t parameters, plist_t build_identity,
 	plist_t node = NULL;
 
 	if (_plist_dict_copy_data(parameters, build_identity, "UniqueBuildID", NULL) < 0) {
-		error("ERROR: Unable to find UniqueBuildID node\n");
+		debug_info("ERROR: Unable to find UniqueBuildID node\n");
 		return -1;
 	}
 
 	_plist_dict_copy_string(parameters, build_identity, "Ap,OSLongVersion", NULL);
 
 	if (_plist_dict_copy_uint(parameters, build_identity, "ApChipID", NULL) < 0) {;
-		error("ERROR: Unable to find ApChipID node\n");
+		debug_info("ERROR: Unable to find ApChipID node\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_uint(parameters, build_identity, "ApBoardID", NULL) < 0) {
-		error("ERROR: Unable to find ApBoardID node\n");
+		debug_info("ERROR: Unable to find ApBoardID node\n");
 		return -1;
 	}
 
@@ -157,32 +158,32 @@ int tss_parameters_add_from_manifest(plist_t parameters, plist_t build_identity,
 	_plist_dict_copy_uint(parameters, build_identity, "BMU,ChipID", NULL);
 
 	if (_plist_dict_copy_uint(parameters, build_identity, "BbChipID", NULL) < 0) {
-		debug("NOTE: Unable to find BbChipID node\n");
+		debug_info("NOTE: Unable to find BbChipID node\n");
 	}
 
 	if (_plist_dict_copy_data(parameters, build_identity, "BbProvisioningManifestKeyHash", NULL) < 0) {
-		debug("NOTE: Unable to find BbProvisioningManifestKeyHash node\n");
+		debug_info("NOTE: Unable to find BbProvisioningManifestKeyHash node\n");
 	}
 
 	if (_plist_dict_copy_data(parameters, build_identity, "BbActivationManifestKeyHash", NULL) < 0) {
-		debug("NOTE: Unable to find BbActivationManifestKeyHash node\n");
+		debug_info("NOTE: Unable to find BbActivationManifestKeyHash node\n");
 	}
 
 	if (_plist_dict_copy_data(parameters, build_identity, "BbCalibrationManifestKeyHash", NULL) < 0) {
-		debug("NOTE: Unable to find BbCalibrationManifestKeyHash node\n");
+		debug_info("NOTE: Unable to find BbCalibrationManifestKeyHash node\n");
 	}
 
 	if (_plist_dict_copy_data(parameters, build_identity, "BbFactoryActivationManifestKeyHash", NULL) < 0) {
-		debug("NOTE: Unable to find BbFactoryActivationManifestKeyHash node\n");
+		debug_info("NOTE: Unable to find BbFactoryActivationManifestKeyHash node\n");
 	}
 
 	if (_plist_dict_copy_data(parameters, build_identity, "BbFDRSecurityKeyHash", NULL) < 0) {
-		debug("NOTE: Unable to find BbFDRSecurityKeyHash node\n");
+		debug_info("NOTE: Unable to find BbFDRSecurityKeyHash node\n");
 	}
 
 	/* BbSkeyId - Used by XMM 6180/GSM */
 	if (_plist_dict_copy_data(parameters, build_identity, "BbSkeyId", NULL) < 0) {
-		debug("NOTE: Unable to find BbSkeyId node\n");
+		debug_info("NOTE: Unable to find BbSkeyId node\n");
 	}
 
 	/* SE,ChipID - Used for SE firmware request */
@@ -252,7 +253,7 @@ int tss_parameters_add_from_manifest(plist_t parameters, plist_t build_identity,
 		/* add build identity manifest dictionary */
 		node = plist_dict_get_item(build_identity, "Manifest");
 		if (!node || plist_get_node_type(node) != PLIST_DICT) {
-			error("ERROR: Unable to find Manifest node\n");
+			debug_info("ERROR: Unable to find Manifest node\n");
 			return -1;
 		}
 		plist_dict_set_item(parameters, "Manifest", plist_copy(node));
@@ -264,14 +265,14 @@ int tss_parameters_add_from_manifest(plist_t parameters, plist_t build_identity,
 int tss_request_add_ap_img4_tags(plist_t request, plist_t parameters)
 {
 	if (!parameters) {
-		error("ERROR: Missing required AP parameters\n");
+		debug_info("ERROR: Missing required AP parameters\n");
 		return -1;
 	}
 
 	_plist_dict_copy_string(request, parameters, "Ap,OSLongVersion", NULL);
 
 	if (_plist_dict_copy_data(request, parameters, "ApNonce", NULL) < 0) {
-		error("ERROR: Unable to find required ApNonce in parameters\n");
+		debug_info("ERROR: Unable to find required ApNonce in parameters\n");
 		return -1;
 	}
 
@@ -280,14 +281,14 @@ int tss_request_add_ap_img4_tags(plist_t request, plist_t parameters)
 	if (!plist_dict_get_item(request, "ApSecurityMode")) {
 		/* copy from parameters if available */
 		if (_plist_dict_copy_bool(request, parameters, "ApSecurityMode", NULL) < 0) {
-			error("ERROR: Unable to find required ApSecurityMode in parameters\n");
+			debug_info("ERROR: Unable to find required ApSecurityMode in parameters\n");
 			return -1;
 		}
 	}
 	if (!plist_dict_get_item(request, "ApProductionMode")) {
 		/* ApProductionMode */
 		if (_plist_dict_copy_bool(request, parameters, "ApProductionMode", NULL) < 0) {
-			error("ERROR: Unable to find required ApProductionMode in parameters\n");
+			debug_info("ERROR: Unable to find required ApProductionMode in parameters\n");
 			return -1;
 		}
 	}
@@ -309,34 +310,34 @@ int tss_request_add_ap_img4_tags(plist_t request, plist_t parameters)
 int tss_request_add_ap_img3_tags(plist_t request, plist_t parameters)
 {
 	if (!parameters) {
-		error("ERROR: Missing required AP parameters\n");
+		debug_info("ERROR: Missing required AP parameters\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_data(request, parameters, "ApNonce", NULL) < 0) {
-		error("ERROR: Unable to find required ApNonce in parameters\n");
+		debug_info("ERROR: Unable to find required ApNonce in parameters\n");
 		return -1;
 	}
 
 	plist_dict_set_item(request, "@APTicket", plist_new_bool(1));
 
 	if (_plist_dict_copy_uint(request, parameters, "ApBoardID", NULL) < 0) {
-		error("ERROR: Unable to find required ApBoardID in request\n");
+		debug_info("ERROR: Unable to find required ApBoardID in request\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_uint(request, parameters, "ApChipID", NULL) < 0) {
-		error("ERROR: Unable to find required ApChipID in request\n");
+		debug_info("ERROR: Unable to find required ApChipID in request\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_uint(request, parameters, "ApSecurityDomain", NULL) < 0) {
-		error("ERROR: Unable to find required ApSecurityDomain in request\n");
+		debug_info("ERROR: Unable to find required ApSecurityDomain in request\n");
 		return -1;
 	}
 
 	if (_plist_dict_copy_bool(request, parameters, "ApProductionMode", NULL) < 0) {
-		error("ERROR: Unable to find required ApProductionMode in parameters\n");
+		debug_info("ERROR: Unable to find required ApProductionMode in parameters\n");
 		return -1;
 	}
 
@@ -398,7 +399,7 @@ void tss_entry_apply_restore_request_rules(plist_t tss_entry, plist_t parameters
 			} else if (!strcmp(key, "ApInRomDFU")) {
 				value2 = plist_dict_get_item(parameters, "ApInRomDFU");
 			} else {
-				error("WARNING: Unhandled condition '%s' while parsing RestoreRequestRules\n", key);
+				debug_info("WARNING: Unhandled condition '%s' while parsing RestoreRequestRules\n", key);
 				value2 = NULL;
 			}
 			if (value2) {
@@ -428,7 +429,7 @@ void tss_entry_apply_restore_request_rules(plist_t tss_entry, plist_t parameters
 				if (value2) {
 					plist_dict_remove_item(tss_entry, key);
 				}
-				debug("DEBUG: Adding %s=%s to TSS entry\n", key, (bv) ? "true" : "false");
+				debug_info("DEBUG: Adding %s=%s to TSS entry\n", key, (bv) ? "true" : "false");
 				plist_dict_set_item(tss_entry, key, plist_new_bool(bv));
 			}
 			free(key);
@@ -441,7 +442,7 @@ int tss_request_add_ap_recovery_tags(plist_t request, plist_t parameters, plist_
 	/* loop over components from build manifest */
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: Unable to find restore manifest\n");
+		debug_info("ERROR: Unable to find restore manifest\n");
 		return -1;
 	}
 
@@ -457,7 +458,7 @@ int tss_request_add_ap_recovery_tags(plist_t request, plist_t parameters, plist_
 		if (key == NULL)
 			break;
 		if (!manifest_entry || plist_get_node_type(manifest_entry) != PLIST_DICT) {
-			error("ERROR: Unable to fetch BuildManifest entry\n");
+			debug_info("ERROR: Unable to fetch BuildManifest entry\n");
 			free(key);
 			return -1;
 		}
@@ -565,12 +566,12 @@ int tss_request_add_ap_recovery_tags(plist_t request, plist_t parameters, plist_
 
 		if (_plist_dict_get_bool(parameters, "_OnlyFWComponents")) {
 			if (!_plist_dict_get_bool(manifest_entry, "Trusted")) {
-				debug("DEBUG: %s: Skipping '%s' as it is not trusted\n", __func__, key);
+				debug_info("DEBUG: %s: Skipping '%s' as it is not trusted\n", __func__, key);
 				continue;
 			}
 
 			if (!_plist_dict_get_bool(info_dict, "IsFirmwarePayload") && !_plist_dict_get_bool(info_dict, "IsSecondaryFirmwarePayload") && !_plist_dict_get_bool(info_dict, "IsFUDFirmware")) {
-				debug("DEBUG: %s: Skipping '%s' as it is neither firmware nor secondary nor FUD firmware payload\n", __func__, key);
+				debug_info("DEBUG: %s: Skipping '%s' as it is neither firmware nor secondary nor FUD firmware payload\n", __func__, key);
 				continue;
 			}
 		}
@@ -584,13 +585,13 @@ int tss_request_add_ap_recovery_tags(plist_t request, plist_t parameters, plist_
 		/* handle RestoreRequestRules */
 		plist_t rules = plist_access_path(manifest_entry, 2, "Info", "RestoreRequestRules");
 		if (rules) {
-			debug("DEBUG: Applying restore request rules for entry %s\n", key);
+			debug_info("DEBUG: Applying restore request rules for entry %s\n", key);
 			tss_entry_apply_restore_request_rules(tss_entry, parameters, rules);
 		}
 
 		/* Make sure we have a Digest key for Trusted items even if empty */
 		if (_plist_dict_get_bool(manifest_entry, "Trusted") && !plist_dict_get_item(manifest_entry, "Digest")) {
-			debug("DEBUG: No Digest data, using empty value for entry %s\n", key);
+			debug_info("DEBUG: No Digest data, using empty value for entry %s\n", key);
 			plist_dict_set_item(tss_entry, "Digest", plist_new_data(NULL, 0));
 		}
 
@@ -613,7 +614,7 @@ int tss_request_add_ap_tags(plist_t request, plist_t parameters, plist_t overrid
 	/* loop over components from build manifest */
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: Unable to find restore manifest\n");
+		debug_info("ERROR: Unable to find restore manifest\n");
 		return -1;
 	}
 
@@ -629,7 +630,7 @@ int tss_request_add_ap_tags(plist_t request, plist_t parameters, plist_t overrid
 		if (key == NULL)
 			break;
 		if (!manifest_entry || plist_get_node_type(manifest_entry) != PLIST_DICT) {
-			error("ERROR: Unable to fetch BuildManifest entry\n");
+			debug_info("ERROR: Unable to fetch BuildManifest entry\n");
 			free(key);
 			return -1;
 		}
@@ -661,26 +662,26 @@ int tss_request_add_ap_tags(plist_t request, plist_t parameters, plist_t overrid
 
 		if (_plist_dict_get_bool(parameters, "ApSupportsImg4")) {
 			if (!plist_dict_get_item(info_dict, "RestoreRequestRules")) {
-				debug("DEBUG: %s: Skipping '%s' as it doesn't have RestoreRequestRules\n", __func__, key);
+				debug_info("DEBUG: %s: Skipping '%s' as it doesn't have RestoreRequestRules\n", __func__, key);
 				continue;
 			}
 		}
 
 		if (_plist_dict_get_bool(parameters, "_OnlyFWComponents")) {
 			if (!_plist_dict_get_bool(manifest_entry, "Trusted")) {
-				debug("DEBUG: %s: Skipping '%s' as it is not trusted\n", __func__, key);
+				debug_info("DEBUG: %s: Skipping '%s' as it is not trusted\n", __func__, key);
 				continue;
 			}
 
 			if (!_plist_dict_get_bool(info_dict, "IsFirmwarePayload") && !_plist_dict_get_bool(info_dict, "IsSecondaryFirmwarePayload") && !_plist_dict_get_bool(info_dict, "IsFUDFirmware")) {
-				debug("DEBUG: %s: Skipping '%s' as it is neither firmware nor secondary nor FUD firmware payload\n", __func__, key);
+				debug_info("DEBUG: %s: Skipping '%s' as it is neither firmware nor secondary nor FUD firmware payload\n", __func__, key);
 				continue;
 			}
 		}
 
 		/* skip components with IsFTAB:true */
 		if (_plist_dict_get_bool(info_dict, "IsFTAB")) {
-			debug("DEBUG: %s: Skipping FTAB component '%s'\n", __func__, key);
+			debug_info("DEBUG: %s: Skipping FTAB component '%s'\n", __func__, key);
 			continue;
 		}
 
@@ -693,13 +694,13 @@ int tss_request_add_ap_tags(plist_t request, plist_t parameters, plist_t overrid
 		/* handle RestoreRequestRules */
 		plist_t rules = plist_access_path(manifest_entry, 2, "Info", "RestoreRequestRules");
 		if (rules) {
-			debug("DEBUG: Applying restore request rules for entry %s\n", key);
+			debug_info("DEBUG: Applying restore request rules for entry %s\n", key);
 			tss_entry_apply_restore_request_rules(tss_entry, parameters, rules);
 		}
 
 		/* Make sure we have a Digest key for Trusted items even if empty */
 		if (_plist_dict_get_bool(manifest_entry, "Trusted") && !plist_dict_get_item(manifest_entry, "Digest")) {
-			debug("DEBUG: No Digest data, using empty value for entry %s\n", key);
+			debug_info("DEBUG: No Digest data, using empty value for entry %s\n", key);
 			plist_dict_set_item(tss_entry, "Digest", plist_new_data(NULL, 0));
 		}
 
@@ -739,14 +740,14 @@ int tss_request_add_baseband_tags(plist_t request, plist_t parameters, plist_t o
 	int32_t bb_cert_id = (int32_t)_plist_dict_get_uint(request, "BbGoldCertId");
 
 	if (_plist_dict_copy_data(request, parameters, "BbSNUM", NULL) < 0) {
-		error("ERROR: Unable to find required BbSNUM in parameters\n");
+		debug_info("ERROR: Unable to find required BbSNUM in parameters\n");
 		return -1;
 	}
 
 	/* BasebandFirmware */
 	node = plist_access_path(parameters, 2, "Manifest", "BasebandFirmware");
 	if (!node || plist_get_node_type(node) != PLIST_DICT) {
-		error("ERROR: Unable to get BasebandFirmware node\n");
+		debug_info("ERROR: Unable to get BasebandFirmware node\n");
 		return -1;
 	}
 	plist_t bbfwdict = plist_copy(node);
@@ -780,29 +781,29 @@ int tss_request_add_se_tags(plist_t request, plist_t parameters, plist_t overrid
 {
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
 	plist_dict_set_item(request, "@BBTicket", plist_new_bool(1));
 
 	if (_plist_dict_copy_uint(request, parameters, "SE,ChipID", NULL) < 0) {
-		error("ERROR: %s: Unable to find required SE,ChipID in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required SE,ChipID in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_data(request, parameters, "SE,ID", NULL) < 0) {
-		error("ERROR: %s: Unable to find required SE,ID in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required SE,ID in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_data(request, parameters, "SE,Nonce", NULL) < 0) {
-		error("ERROR: %s: Unable to find required SE,Nonce in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required SE,Nonce in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_data(request, parameters, "SE,RootKeyIdentifier", NULL) < 0) {
-		error("ERROR: %s: Unable to find required SE,RootKeyIdentifier in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required SE,RootKeyIdentifier in parameters\n", __func__);
 		return -1;
 	}
 
@@ -821,7 +822,7 @@ int tss_request_add_se_tags(plist_t request, plist_t parameters, plist_t overrid
 		if (key == NULL)
 			break;
 		if (!manifest_entry || plist_get_node_type(manifest_entry) != PLIST_DICT) {
-			error("ERROR: Unable to fetch BuildManifest entry\n");
+			debug_info("ERROR: Unable to fetch BuildManifest entry\n");
 			free(key);
 			return -1;
 		}
@@ -874,7 +875,7 @@ int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t ove
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -883,14 +884,14 @@ int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t ove
 	plist_dict_set_item(request, "@Savage,Ticket", plist_new_bool(1));
 
 	if (_plist_dict_copy_data(request, parameters, "Savage,UID", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,UID in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,UID in parameters\n", __func__);
 		return -1;
 	}
 
 	/* add SEP */
 	node = plist_access_path(manifest_node, 2, "SEP", "Digest");
 	if (!node) {
-		error("ERROR: Unable to get SEP digest from manifest\n");
+		debug_info("ERROR: Unable to get SEP digest from manifest\n");
 		return -1;
 	}
 	plist_t dict = plist_new_dict();
@@ -898,27 +899,27 @@ int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t ove
 	plist_dict_set_item(request, "SEP", dict);
 
 	if (_plist_dict_copy_uint(request, parameters, "Savage,PatchEpoch", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,PatchEpoch in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,PatchEpoch in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_uint(request, parameters, "Savage,ChipID", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,ChipID in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,ChipID in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_bool(request, parameters, "Savage,AllowOfflineBoot", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,AllowOfflineBoot in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,AllowOfflineBoot in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_bool(request, parameters, "Savage,ReadFWKey", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,ReadFWKey in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,ReadFWKey in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_bool(request, parameters, "Savage,ProductionMode", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,ProductionMode in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,ProductionMode in parameters\n", __func__);
 		return -1;
 	}
 
@@ -945,7 +946,7 @@ int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t ove
 	/* add Savage,B?-*-Patch */
 	node = plist_dict_get_item(manifest_node, comp_name);
 	if (!node) {
-		error("ERROR: Unable to get %s entry from manifest\n", comp_name);
+		debug_info("ERROR: Unable to get %s entry from manifest\n", comp_name);
 		return -1;
 	}
 	dict = plist_copy(node);
@@ -957,12 +958,12 @@ int tss_request_add_savage_tags(plist_t request, plist_t parameters, plist_t ove
 	}
 
 	if (_plist_dict_copy_data(request, parameters, "Savage,Nonce", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,Nonce in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,Nonce in parameters\n", __func__);
 		return -1;
 	}
 
 	if (_plist_dict_copy_bool(request, parameters, "Savage,ReadECKey", NULL) < 0) {
-		error("ERROR: %s: Unable to find required Savage,ReadECKey in parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to find required Savage,ReadECKey in parameters\n", __func__);
 		return -1;
 	}
 
@@ -980,7 +981,7 @@ int tss_request_add_yonkers_tags(plist_t request, plist_t parameters, plist_t ov
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -991,7 +992,7 @@ int tss_request_add_yonkers_tags(plist_t request, plist_t parameters, plist_t ov
 	/* add SEP */
 	node = plist_access_path(manifest_node, 2, "SEP", "Digest");
 	if (!node) {
-		error("ERROR: Unable to get SEP digest from manifest\n");
+		debug_info("ERROR: Unable to get SEP digest from manifest\n");
 		return -1;
 	}
 	plist_t dict = plist_new_dict();
@@ -1004,7 +1005,7 @@ int tss_request_add_yonkers_tags(plist_t request, plist_t parameters, plist_t ov
 		for (i = 0; i < (int)(sizeof(keys) / sizeof(keys[0])); ++i) {
 			node = plist_dict_get_item(parameters, keys[i]);
 			if (!node) {
-				error("ERROR: %s: Unable to find required %s in parameters\n", __func__, keys[i]);
+				debug_info("ERROR: %s: Unable to find required %s in parameters\n", __func__, keys[i]);
 			}
 			plist_dict_set_item(request, keys[i], plist_copy(node));
 			node = NULL;
@@ -1049,7 +1050,7 @@ int tss_request_add_yonkers_tags(plist_t request, plist_t parameters, plist_t ov
 	free(iter);
 
 	if (comp_name == NULL) {
-		error("ERROR: No Yonkers node for %s/%lu\n", (isprod) ? "Production" : "Development", (unsigned long)fabrevision);
+		debug_info("ERROR: No Yonkers node for %s/%lu\n", (isprod) ? "Production" : "Development", (unsigned long)fabrevision);
 		return -1;
 	}
 
@@ -1080,7 +1081,7 @@ int tss_request_add_vinyl_tags(plist_t request, plist_t parameters, plist_t over
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -1143,7 +1144,7 @@ int tss_request_add_rose_tags(plist_t request, plist_t parameters, plist_t overr
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -1176,13 +1177,13 @@ int tss_request_add_rose_tags(plist_t request, plist_t parameters, plist_t overr
 			/* handle RestoreRequestRules */
 			plist_t rules = plist_access_path(manifest_entry, 2, "Info", "RestoreRequestRules");
 			if (rules) {
-				debug("DEBUG: Applying restore request rules for entry %s\n", comp_name);
+				debug_info("DEBUG: Applying restore request rules for entry %s\n", comp_name);
 				tss_entry_apply_restore_request_rules(manifest_entry, parameters, rules);
 			}
 
 			/* Make sure we have a Digest key for Trusted items even if empty */
 			if (_plist_dict_get_bool(manifest_entry, "Trusted") && !plist_dict_get_item(manifest_entry, "Digest")) {
-				debug("DEBUG: No Digest data, using empty value for entry %s\n", comp_name);
+				debug_info("DEBUG: No Digest data, using empty value for entry %s\n", comp_name);
 				plist_dict_set_item(manifest_entry, "Digest", plist_new_data(NULL, 0));
 			}
 
@@ -1209,7 +1210,7 @@ int tss_request_add_veridian_tags(plist_t request, plist_t parameters, plist_t o
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -1240,13 +1241,13 @@ int tss_request_add_veridian_tags(plist_t request, plist_t parameters, plist_t o
 			/* handle RestoreRequestRules */
 			plist_t rules = plist_access_path(manifest_entry, 2, "Info", "RestoreRequestRules");
 			if (rules) {
-				debug("DEBUG: Applying restore request rules for entry %s\n", comp_name);
+				debug_info("DEBUG: Applying restore request rules for entry %s\n", comp_name);
 				tss_entry_apply_restore_request_rules(manifest_entry, parameters, rules);
 			}
 
 			/* Make sure we have a Digest key for Trusted items even if empty */
 			if (_plist_dict_get_bool(manifest_entry, "Trusted") && !plist_dict_get_item(manifest_entry, "Digest")) {
-				debug("DEBUG: No Digest data, using empty value for entry %s\n", comp_name);
+				debug_info("DEBUG: No Digest data, using empty value for entry %s\n", comp_name);
 				plist_dict_set_item(manifest_entry, "Digest", plist_new_data(NULL, 0));
 			}
 
@@ -1273,7 +1274,7 @@ int tss_request_add_tcon_tags(plist_t request, plist_t parameters, plist_t overr
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -1330,7 +1331,7 @@ int tss_request_add_timer_tags(plist_t request, plist_t parameters, plist_t over
 
 	plist_t manifest_node = plist_dict_get_item(parameters, "Manifest");
 	if (!manifest_node || plist_get_node_type(manifest_node) != PLIST_DICT) {
-		error("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
+		debug_info("ERROR: %s: Unable to get restore manifest from parameters\n", __func__);
 		return -1;
 	}
 
@@ -1339,7 +1340,7 @@ int tss_request_add_timer_tags(plist_t request, plist_t parameters, plist_t over
 
 	node = plist_dict_get_item(parameters, "TicketName");
 	if (!node) {
-		error("ERROR: %s: Missing TicketName\n", __func__);
+		debug_info("ERROR: %s: Missing TicketName\n", __func__);
 		return -1;
 	}
 	char key[64];
@@ -1387,13 +1388,13 @@ int tss_request_add_timer_tags(plist_t request, plist_t parameters, plist_t over
 			/* handle RestoreRequestRules */
 			plist_t rules = plist_access_path(manifest_entry, 2, "Info", "RestoreRequestRules");
 			if (rules) {
-				debug("DEBUG: Applying restore request rules for entry %s\n", comp_name);
+				debug_info("DEBUG: Applying restore request rules for entry %s\n", comp_name);
 				tss_entry_apply_restore_request_rules(manifest_entry, parameters, rules);
 			}
 
 			/* Make sure we have a Digest key for Trusted items even if empty */
 			if (_plist_dict_get_bool(manifest_entry, "Trusted") && !plist_dict_get_item(manifest_entry, "Digest")) {
-				debug("DEBUG: No Digest data, using empty value for entry %s\n", comp_name);
+				debug_info("DEBUG: No Digest data, using empty value for entry %s\n", comp_name);
 				plist_dict_set_item(manifest_entry, "Digest", plist_new_data(NULL, 0));
 			}
 
@@ -1521,14 +1522,14 @@ plist_t tss_request_send(plist_t tss_request, const char* server_url_string)
 		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(request));
 		if (server_url_string) {
 			curl_easy_setopt(handle, CURLOPT_URL, server_url_string);
-			info("Request URL set to %s\n", server_url_string);
+			debug_info("Request URL set to %s\n", server_url_string);
 		} else {
 			int url_index = (retry - 1) % 6;
 			curl_easy_setopt(handle, CURLOPT_URL, urls[url_index]);
-			info("Request URL set to %s\n", urls[url_index]);
+			debug_info("Request URL set to %s\n", urls[url_index]);
 		}
 
-		info("Sending TSS request attempt %d... ", retry);
+		debug_info("Sending TSS request attempt %d... ", retry);
 
 		curl_easy_perform(handle);
 		curl_slist_free_all(header);
@@ -1536,12 +1537,12 @@ plist_t tss_request_send(plist_t tss_request, const char* server_url_string)
 
 		if (strstr(response->content, "MESSAGE=SUCCESS")) {
 			status_code = 0;
-			info("response successfully received\n");
+			debug_info("response successfully received\n");
 			break;
 		}
 
 		if (response->length > 0) {
-			error("TSS server returned: %s\n", response->content);
+			debug_info("TSS server returned: %s\n", response->content);
 		}
 
 		char* status = strstr(response->content, "STATUS=");
@@ -1549,7 +1550,7 @@ plist_t tss_request_send(plist_t tss_request, const char* server_url_string)
 			sscanf(status+7, "%d&%*s", &status_code);
 		}
 		if (status_code == -1) {
-			error("%s\n", curl_error_message);
+			debug_info("%s\n", curl_error_message);
 			// no status code in response. retry
 			free(response->content);
 			free(response);
@@ -1572,16 +1573,16 @@ plist_t tss_request_send(plist_t tss_request, const char* server_url_string)
 			// An internal error occured, most likely the request was malformed
 			break;
 		} else {
-			error("ERROR: tss_send_request: Unhandled status code %d\n", status_code);
+			debug_info("ERROR: tss_send_request: Unhandled status code %d\n", status_code);
 		}
 	}
 
 	if (status_code != 0) {
 		if (response && strstr(response->content, "MESSAGE=") != NULL) {
 			char* message = strstr(response->content, "MESSAGE=") + strlen("MESSAGE=");
-			error("ERROR: TSS request failed (status=%d, message=%s)\n", status_code, message);
+			debug_info("ERROR: TSS request failed (status=%d, message=%s)\n", status_code, message);
 		} else {
-			error("ERROR: TSS request failed: %s (status=%d)\n", curl_error_message, status_code);
+			debug_info("ERROR: TSS request failed: %s (status=%d)\n", curl_error_message, status_code);
 		}
 		free(request);
 		if (response) free(response->content);
@@ -1591,7 +1592,7 @@ plist_t tss_request_send(plist_t tss_request, const char* server_url_string)
 
 	char* tss_data = strstr(response->content, "<?xml");
 	if (tss_data == NULL) {
-		error("ERROR: Incorrectly formatted TSS response\n");
+		debug_info("ERROR: Incorrectly formatted TSS response\n");
 		free(request);
 		free(response->content);
 		free(response);
@@ -1614,7 +1615,7 @@ static int tss_response_get_data_by_key(plist_t response, const char* name, unsi
 {
 	plist_t node = plist_dict_get_item(response, name);
 	if (!node || plist_get_node_type(node) != PLIST_DATA) {
-		debug("DEBUG: %s: No entry '%s' in TSS response\n", __func__, name);
+		debug_info("DEBUG: %s: No entry '%s' in TSS response\n", __func__, name);
 		return -1;
 	}
 
@@ -1626,7 +1627,7 @@ static int tss_response_get_data_by_key(plist_t response, const char* name, unsi
 		*buffer = (unsigned char*)data;
 		return 0;
 	} else {
-		error("ERROR: Unable to get %s data from TSS response\n", name);
+		debug_info("ERROR: Unable to get %s data from TSS response\n", name);
 		return -1;
 	}
 }
@@ -1656,13 +1657,13 @@ int tss_response_get_path_by_entry(plist_t response, const char* entry, char** p
 
 	entry_node = plist_dict_get_item(response, entry);
 	if (!entry_node || plist_get_node_type(entry_node) != PLIST_DICT) {
-		debug("DEBUG: %s: No entry '%s' in TSS response\n", __func__, entry);
+		debug_info("DEBUG: %s: No entry '%s' in TSS response\n", __func__, entry);
 		return -1;
 	}
 
 	path_node = plist_dict_get_item(entry_node, "Path");
 	if (!path_node || plist_get_node_type(path_node) != PLIST_STRING) {
-		debug("NOTE: Unable to find %s path in TSS entry\n", entry);
+		debug_info("NOTE: Unable to find %s path in TSS entry\n", entry);
 		return -1;
 	}
 	plist_get_string_val(path_node, &path_string);
@@ -1699,7 +1700,7 @@ int tss_response_get_blob_by_path(plist_t tss, const char* path, unsigned char**
 
 		path_node = plist_dict_get_item(tss_entry, "Path");
 		if (!path_node || plist_get_node_type(path_node) != PLIST_STRING) {
-			error("ERROR: Unable to find TSS path node in entry %s\n", entry_key);
+			debug_info("ERROR: Unable to find TSS path node in entry %s\n", entry_key);
 			free(iter);
 			return -1;
 		}
@@ -1708,7 +1709,7 @@ int tss_response_get_blob_by_path(plist_t tss, const char* path, unsigned char**
 		if (strcmp(path, entry_path) == 0) {
 			blob_node = plist_dict_get_item(tss_entry, "Blob");
 			if (!blob_node || plist_get_node_type(blob_node) != PLIST_DATA) {
-				error("ERROR: Unable to find TSS blob node in entry %s\n", entry_key);
+				debug_info("ERROR: Unable to find TSS blob node in entry %s\n", entry_key);
 				free(iter);
 				return -1;
 			}
@@ -1739,13 +1740,13 @@ int tss_response_get_blob_by_entry(plist_t response, const char* entry, unsigned
 
 	tss_entry = plist_dict_get_item(response, entry);
 	if (!tss_entry || plist_get_node_type(tss_entry) != PLIST_DICT) {
-		debug("DEBUG: %s: No entry '%s' in TSS response\n", __func__, entry);
+		debug_info("DEBUG: %s: No entry '%s' in TSS response\n", __func__, entry);
 		return -1;
 	}
 
 	blob_node = plist_dict_get_item(tss_entry, "Blob");
 	if (!blob_node || plist_get_node_type(blob_node) != PLIST_DATA) {
-		error("ERROR: Unable to find blob in %s entry\n", entry);
+		debug_info("ERROR: Unable to find blob in %s entry\n", entry);
 		return -1;
 	}
 	plist_get_data_val(blob_node, &blob_data, &blob_size);
