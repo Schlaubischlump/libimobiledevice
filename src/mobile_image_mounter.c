@@ -299,7 +299,6 @@ static mobile_image_mounter_error_t mobile_image_mounter_query_personalization_i
 	if (!client) {
 		return MOBILE_IMAGE_MOUNTER_E_INVALID_ARG;
 	}
-	mobile_image_mounter_lock(client);
 
 	plist_t dict = plist_new_dict();
 	plist_dict_set_item(dict, "Command", plist_new_string("QueryPersonalizationIdentifiers"));
@@ -318,7 +317,6 @@ static mobile_image_mounter_error_t mobile_image_mounter_query_personalization_i
 	}
 	
 leave_unlock:
-	mobile_image_mounter_unlock(client);
 	return res;
 }
 
@@ -327,7 +325,6 @@ static mobile_image_mounter_error_t mobile_image_mounter_query_nonce(mobile_imag
 	if (!client) {
 		return MOBILE_IMAGE_MOUNTER_E_INVALID_ARG;
 	}
-	mobile_image_mounter_lock(client);
 
 	plist_t dict = plist_new_dict();
 	plist_dict_set_item(dict, "Command", plist_new_string("QueryNonce"));
@@ -358,7 +355,6 @@ static mobile_image_mounter_error_t mobile_image_mounter_query_nonce(mobile_imag
 leave_unlock:
 	if (result)
 		plist_free(result);
-	mobile_image_mounter_unlock(client);
 	return res;
 }
 
@@ -371,11 +367,14 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 
 	plist_t tss_request = NULL;
 	
-	plist_t identifier = NULL;
-	mobile_image_mounter_error_t res = mobile_image_mounter_query_personalization_identifiers(client, &identifier);
-	plist_t node = plist_dict_get_item(identifier, "PersonalizationIdentifiers");
+	plist_t identifiers = NULL;
+	mobile_image_mounter_error_t res = mobile_image_mounter_query_personalization_identifiers(client, &identifiers);
+	if (res != MOBILE_IMAGE_MOUNTER_E_SUCCESS) {
+		goto leave_unlock;
+	}
 	
-	if (identifier == NULL || node == NULL || plist_get_node_type(node) != PLIST_DICT) {
+	plist_t personal_identifiers = plist_dict_get_item(identifiers, "PersonalizationIdentifiers");
+	if (identifiers == NULL || personal_identifiers == NULL || plist_get_node_type(personal_identifiers) != PLIST_DICT) {
 		res = MOBILE_IMAGE_MOUNTER_E_UNKNOWN_ERROR;
 		goto leave_unlock;
 	}
@@ -385,14 +384,14 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 	char* key = NULL;
 	plist_t subnode = NULL;
 	
-	plist_dict_new_iter(identifier, &it);
+	plist_dict_new_iter(personal_identifiers, &it);
 	if (!it) {
 		res = MOBILE_IMAGE_MOUNTER_E_UNKNOWN_ERROR;
 		goto leave_unlock;
 	}
 	
 	do {
-		plist_dict_next_item(identifier, it, &key, &subnode);
+		plist_dict_next_item(personal_identifiers, it, &key, &subnode);
 		if (!key) break;
 		
 		if (strncmp("Ap,", key, 3) == 0)
@@ -405,11 +404,11 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 	it = NULL;
 	
 	// find matching build manifest entry
-	uint32_t board_id = (uint32_t)_plist_dict_get_uint(identifier, "BoardId");
-	uint32_t chip_id = (uint32_t)_plist_dict_get_uint(identifier, "ChipID");
+	uint32_t board_id = (uint32_t)_plist_dict_get_uint(personal_identifiers, "BoardId");
+	uint32_t chip_id = (uint32_t)_plist_dict_get_uint(personal_identifiers, "ChipID");
 	
 	// Get all BuildIdentities from BuildManifest.plist
-	node = plist_dict_get_item(build_manifest, "BuildIdentities");
+	plist_t node = plist_dict_get_item(build_manifest, "BuildIdentities");
 	uint32_t num_identities = 0;
 	if (node && plist_get_node_type(node) == PLIST_ARRAY)
 		num_identities = plist_array_get_size(node);
@@ -429,6 +428,7 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 	if (build_identity == NULL) {
 		debug_info("%s: Error finding build identity in build manifest!", __func__);
 		res = MOBILE_IMAGE_MOUNTER_E_UNKNOWN_ERROR;
+		goto leave_unlock;
 	}
 		
 	plist_dict_set_item(tss_request, "@ApImg4Ticket", plist_new_bool(1));
@@ -445,13 +445,17 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 	 
 	char *ap_nonce = NULL;
 	uint64_t ap_nonce_size = 0;
-	mobile_image_mounter_query_nonce(client, "DeveloperDiskImage", &ap_nonce, &ap_nonce_size);
+	res = mobile_image_mounter_query_nonce(client, "DeveloperDiskImage", &ap_nonce, &ap_nonce_size);
+	if (res != MOBILE_IMAGE_MOUNTER_E_SUCCESS) {
+		goto leave_unlock;
+	}
+	
 	plist_dict_set_item(tss_request, "ApNonce", plist_new_data(ap_nonce, ap_nonce_size));
 	plist_mem_free(ap_nonce);
 	
 	// Extract more values from the build manifest
 	plist_t manifest_entries = plist_dict_get_item(build_identity, "Manifest");
-	if (!node || plist_get_node_type(node) != PLIST_DICT) {
+	if (!manifest_entries || plist_get_node_type(manifest_entries) != PLIST_DICT) {
 		res = MOBILE_IMAGE_MOUNTER_E_UNKNOWN_ERROR;
 		goto leave_unlock;
 	}
@@ -496,8 +500,9 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 		
 		// Ensure a digest always exists
 		plist_t digest = plist_dict_get_item(subnode, "Digest");
-		if (!digest)
+		if (!digest) {
 			plist_dict_set_item(tss_entry, "Digest", plist_new_data(NULL, 0));
+		}
 		
 		plist_dict_set_item(tss_request, key, tss_entry);
 		
@@ -512,9 +517,9 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 	parameters = NULL;
 	
 	plist_t tss_response = tss_request_send(tss_request, NULL);
-	node = plist_dict_get_item(tss_response, "ApImg4Ticket");
-	if (node && plist_get_node_type(node) == PLIST_DATA) {
-		plist_get_data_val(node, manifest, manifest_size);
+	plist_t ap_img4_ticket = plist_dict_get_item(tss_response, "ApImg4Ticket");
+	if (ap_img4_ticket && plist_get_node_type(ap_img4_ticket) == PLIST_DATA) {
+		plist_get_data_val(ap_img4_ticket, manifest, manifest_size);
 	} else {
 		debug_info("%s: Error tss_response does not contain ApImg4Ticket!", __func__);
 		res = MOBILE_IMAGE_MOUNTER_E_UNKNOWN_ERROR;
@@ -525,8 +530,8 @@ LIBIMOBILEDEVICE_API mobile_image_mounter_error_t get_manifest_from_tss(mobile_i
 	
 leave_unlock:
 
-	if (identifier)
-		plist_free(identifier);
+	if (identifiers)
+		plist_free(identifiers);
 	if (tss_request)
 		plist_free(tss_request);
 	mobile_image_mounter_unlock(client);
